@@ -1,0 +1,20 @@
+# Use postgres/example user/password credentials
+version: '3.9'
+
+services:
+  enrollment-service-spring:
+    build: .
+    container_name: enrollment-service-spring
+    ports:
+      - "8282:8282"
+    depends_on:
+      - enrollment-service-db
+
+
+  enrollment-service-db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: example
+    ports:
+      - "5435:5432"
