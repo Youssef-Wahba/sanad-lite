@@ -36,6 +36,7 @@ services:
     networks:
       - course-network
       - course-review-network
+      - course-enrollment-course-network
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://course-service-db:5432/postgres
       REVIEW_SERVICE_URL:  http://review-service:8080/review_service_war_exploded/api/v1/reviews
@@ -52,12 +53,44 @@ services:
 
 
 
+
+  # Course-Enrollment Service
+  course-enrollment-service:
+    build: ./course-enrollment-service
+    ports:
+      - "8282:8282"
+    depends_on:
+      - course-enrollment-db
+    networks:
+      - course-enrollment-network
+      - course-enrollment-course-network
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://course-enrollment-db:5432/postgres
+      COURSE_SERVICE_URL: http://course-service:8080/api/v1/courses
+
+  course-enrollment-db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: example
+    ports:
+      - "5435:5432"
+    networks:
+      - course-enrollment-network
+
+
+
 networks:
   review-network:
     driver: bridge
   course-network:
     driver: bridge
+  course-enrollment-network:
+    driver: bridge
+
   course-review-network:
+    driver: bridge
+  course-enrollment-course-network:
     driver: bridge
 
 
