@@ -5,9 +5,8 @@ import { config } from 'dotenv';
 import { stringifyQueryParams } from '../utils/helpers.js';
 config();
 
-const router = Router();
 const version = 'api/v1';
-const enrollmentServiceBaseUrl = `http://localhost:${process.env.ENROLLMENT_SERVICE_PORT}`;
+const enrollmentServiceBaseUrl = process.env.ENROLLMENT_SERVICE_URL;
 
 export const addEnrollment = async (req, res) => {
 	try {

@@ -51,7 +51,7 @@ router.post(`/${version}/courses/reviews`, CourseController.addReviewToCourse);
 router.get(
 	`/${version}/courses/:courseId/reviews`,
 	protect,
-    restrictTo(Roles.ADMIN, Roles.INSTRUCTOR, Roles.STUDENT),
+	restrictTo(Roles.ADMIN, Roles.INSTRUCTOR, Roles.STUDENT),
 	CourseController.getCourseReviews
 );
 

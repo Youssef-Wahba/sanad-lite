@@ -15,13 +15,13 @@ function App() {
 			path: '/',
 			element: <HomeLayout />,
 			children: [
-				{ index: true, element: <Home /> },
+				// { index: true, element: <Home /> },
 				{ path: 'courses', element: <Courses /> },
 				{ path: 'course/:courseId', element: <CourseDetails /> },
 
 				{ path: 'book', element: <BookCourse /> },
 
-				{ path: 'login', element: <Login /> },
+				{ index: true, path: 'login', element: <Login /> },
 				{ path: 'register', element: <Register /> },
 			],
 		},

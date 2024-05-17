@@ -10,9 +10,13 @@ import SentimentVerySatisfiedIcon from '@mui/icons-material/SentimentVerySatisfi
 import courseAvatar from '../assets/pngtree-training-course-online-computer-chat-flat-color-icon-vector-png-image_2007114.jpg';
 import TAvatar from '../assets/WhatsApp Image 2024-05-15 at 02.32.37_92e4de74.jpg';
 import smallAvatar from '../assets/imgUser.svg';
-import Pagination from './Pagination';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
+import {
+	addCourseContent,
+	addCourseReview,
+	getCourseReviews,
+} from '../utils/apis';
 
 const StyledRating = styled(Rating)(({ theme }) => ({
 	'& .MuiRating-iconEmpty .MuiSvgIcon-root': {
@@ -42,6 +46,7 @@ const customIcons = {
 		label: 'Very Satisfied',
 	},
 };
+
 function IconContainer(props) {
 	const { value, ...other } = props;
 	return <span {...other}>{customIcons[value].icon}</span>;
@@ -53,24 +58,15 @@ IconContainer.propTypes = {
 
 function CourseDetails() {
 	const [Rate, setRate] = useState(2);
-	const [currentPage, setCurrentPage] = useState(1);
 	const [course, setCourse] = useState({});
 	const [instructor, setInstructor] = useState({});
 	const [content, setContent] = useState([]);
 	const [reviews, setReviews] = useState([]);
+	const [text, setText] = useState('');
+	const [link, setLink] = useState('');
+	const [title, setTitle] = useState('');
 	const { courseId } = useParams();
 
-	const handlePageChange = (newPage) => {
-		setCurrentPage(newPage);
-	};
-	const itemsPerPage = 1000;
-
-	const x = [3, 3, 3, 3, 3, 33];
-
-	// Calculate the start and end indexes for the current page
-	const startIndex = (currentPage - 1) * itemsPerPage;
-	const endIndex = Math.min(startIndex + itemsPerPage, x?.length);
-	const visibleData2 = x?.slice(startIndex, endIndex);
 	const fetchCurrentCourse = async () => {
 		const response = await axios.get(
 			`http://localhost:8383/api/v1/courses/${courseId}`,
@@ -84,8 +80,6 @@ function CourseDetails() {
 		const getContent = response.data.courseContent;
 		setCourse(getCourse);
 		setContent(getContent);
-		console.log(getCourse);
-		console.log(getContent);
 		const response2 = await axios.get(
 			`http://localhost:8383/api/v1/users/${getCourse.instructorId}`,
 			{
@@ -96,11 +90,38 @@ function CourseDetails() {
 		);
 		const getInstructor = response2.data;
 		setInstructor(getInstructor);
-		console.log(getInstructor);
+	};
+
+	const handleAddReview = async () => {
+		await addCourseReview(
+			{
+				courseId: courseId,
+				studentUUID: JSON.parse(localStorage.getItem('user'))['_id'],
+				rating: Rate,
+				review: text,
+			},
+			localStorage.getItem('token')
+		);
+	};
+
+	const fetchCourseReviews = async () => {
+		const res = await getCourseReviews(courseId, localStorage.getItem('token'));
+		if (!res['err']) setReviews(res.data);
+		console.log(reviews);
+	};
+	const handleAddContent = async () => {
+		console.log(
+			await addCourseContent(
+				courseId,
+				{ title: title, link: link },
+				localStorage.getItem('token')
+			)
+		);
 	};
 
 	useEffect(() => {
 		fetchCurrentCourse();
+		fetchCourseReviews();
 	}, []);
 
 	return (
@@ -112,7 +133,7 @@ function CourseDetails() {
 
 				<div className=" p-5">
 					<h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 ">
-						{course.name}
+						{course.id}. {course.name}
 					</h5>
 					<p className="mb-3 font-normal text-gray-700 dark:text-gray-400">
 						{course.description}
@@ -129,45 +150,34 @@ function CourseDetails() {
 								highlightSelectedOnly
 							/>
 							<div className="w-full  items-start sm:w-[80%] gap-y-3 flex flex-col sm:flex-row sm:items-center gap-x-8 justify-between">
+								Reviews: {course.ratingsCount}
+								<br />
+								Category : {course.category}
+								<br />
+								Until: {new Date(course.endDate).toLocaleDateString()} <br />
+								Enrollments : {course.enrollmentsNumber}
+								{course.maxCapacity === -1
+									? ' / inf'
+									: ` / ${course.maxCapacity}`}
 								<div>
 									<div className="flex items-center gap-x-1">
-										<span className=" font-semibold text-gray-700 dark:text-gray-400 ">
-											Reviews : {course.ratingsCount}
-										</span>
+										<span className=" font-semibold text-gray-700 dark:text-gray-400 "></span>
 									</div>
 									<div className="flex items-center gap-x-1">
-										<div className=" font-semibold text-gray-700 dark:text-gray-400 ">
-											Enrollments : {course.enrollmentsNumber}
-											{course.maxCapacity === -1
-												? ' / inf'
-												: ` / ${course.maxCapacity}`}
-										</div>
-									</div>
-								</div>
-								<div>
-									<div className="flex items-center gap-x-1">
-										<span className=" font-semibold text-gray-700 dark:text-gray-400 ">
-											Category : {course.category}
-										</span>
-									</div>
-									<div className="flex items-center gap-x-1">
-										<div className=" font-semibold text-gray-700 dark:text-gray-400 ">
-											Until: {new Date(course.endDate).toLocaleDateString()}
-										</div>
+										<div className=" font-semibold text-gray-700 dark:text-gray-400 "></div>
 									</div>
 								</div>
 							</div>
 						</div>
-						{course.enrollmentsNumber < course.maxCapacity &&
-						course.endDate != null &&
-						new Date(course.endDate).getTime() > new Date().getTime() ? (
-							<div className=" w-full  self-center py-2 md:mt-3  cursor-pointer bg-green text-white gap-x-1 flex items-center justify-center rounded-md text-xl">
-								Enroll
-								<i className="fa-solid fa-plus text-white text-2xl"></i>
-							</div>
-						) : (
-							''
-						)}
+						{localStorage.getItem('role') === 'student' &&
+							course.enrollmentsNumber < course.maxCapacity &&
+							course.endDate != null &&
+							new Date(course.endDate).getTime() > new Date().getTime() && (
+								<div className=" w-full  self-center py-2 md:mt-3  cursor-pointer bg-green text-white gap-x-1 flex items-center justify-center rounded-md text-xl">
+									Enroll
+									<i className="fa-solid fa-plus text-white text-2xl"></i>
+								</div>
+							)}
 					</div>
 				</div>
 			</div>
@@ -186,18 +196,11 @@ function CourseDetails() {
 					</p>
 
 					<div className="w-full flex-col flex items-start justify-between gap-y-2">
-						<div />
-						Name: {instructor.name}
-						<br />
-						bio: {instructor.bio}
-						<br />
 						Email: {instructor.email}
 						<br />
 						affiliaton: {instructor.affiliation}
 						<br />
-						years of experience: {instructor.yearsOfExperiecnce}
-						<br />
-						course count: {instructor.yearsOfExperiecnce}
+						years of experience: {instructor.yearsOfExperience}
 						<br />
 					</div>
 				</div>
@@ -209,36 +212,50 @@ function CourseDetails() {
 					<span className="w-[50px] h-[2px] bg-black absolute start-[50%] translate-x-[-50%]"></span>
 				</div>
 
-				<form className="addContent px-6 w-full flex flex-col gap-y-3 md:w-[70%] self-center ">
-					<h4 className="text-xl">Add Content</h4>
+				{localStorage.getItem('role') === 'instructor' && (
+					<form
+						onSubmit={(e) => {
+							e.preventDefault();
+							handleAddContent();
+						}}
+						className="addContent px-6 w-full flex flex-col gap-y-3 md:w-[70%] self-center "
+					>
+						<h4 className="text-xl">Add Content</h4>
 
-					<div className="flex items-center gap-8 bg-white p-3 rounded-xl ">
-						<div className="title flex flex-col gap-y-1 w-full sm:w-[47%]">
-							<label className="text-textColor__2" htmlFor="title">
-								Title
-							</label>
-							<input
-								type="text"
-								className="focus:outline-none p-2 rounded-md bg-text_FF text-sm font-semibold text-secondMainColor"
-								placeholder="type title ..."
-							/>
+						<div className="flex items-center gap-8 bg-white p-3 rounded-xl ">
+							<div className="title flex flex-col gap-y-1 w-full sm:w-[47%]">
+								<label className="text-textColor__2" htmlFor="title">
+									Title
+								</label>
+								<input
+									type="text"
+									name="title"
+									onChange={(e) => setTitle(e.target.value)}
+									className="focus:outline-none p-2 rounded-md bg-text_FF text-sm font-semibold text-secondMainColor"
+									placeholder="type title ..."
+								/>
+							</div>
+							<div className="title flex flex-col gap-y-1 w-full sm:w-[47%]">
+								<label className="text-textColor__2" htmlFor="link">
+									Link
+								</label>
+								<input
+									name="link"
+									type="text"
+									onChange={(e) => setLink(e.target.value)}
+									className="focus:outline-none p-2 rounded-md bg-text_FF text-sm font-semibold text-secondMainColor"
+									placeholder="type link ..."
+								/>
+							</div>
 						</div>
-						<div className="title flex flex-col gap-y-1 w-full sm:w-[47%]">
-							<label className="text-textColor__2" htmlFor="title">
-								Link
-							</label>
-							<input
-								type="text"
-								className="focus:outline-none p-2 rounded-md bg-text_FF text-sm font-semibold text-secondMainColor"
-								placeholder="type link ..."
-							/>
-						</div>
-					</div>
-
-					<button className="rounded-xl p-2  w-full bg-secondMainColor text-white">
-						Submit
-					</button>
-				</form>
+						<button
+							className="rounded-xl p-2  w-full bg-secondMainColor text-white"
+							type="submit"
+						>
+							Submit
+						</button>
+					</form>
+				)}
 
 				<ul
 					className="content w-full  flex flex-col md:flex-row flex-wrap    px-6  items-center gap-8"
@@ -251,7 +268,7 @@ function CourseDetails() {
 								className="block review w-full md:w-[47%] bg-text_FF p-2 rounded-md text-mainColor font-bold"
 							>
 								<li className=" flex items-center w-full justify-between px-2 ">
-									<a href={item.path}>
+									<a href={item.path} rel="noreferrer" target="_blank">
 										{' '}
 										{i + 1}: {item.title}
 									</a>
@@ -270,13 +287,6 @@ function CourseDetails() {
 						);
 					})}
 				</ul>
-
-				<Pagination
-					totalItems={x?.length}
-					itemsPerPage={itemsPerPage}
-					currentPage={currentPage}
-					onPageChange={handlePageChange}
-				/>
 			</div>
 
 			<div className="w-full flex flex-col gap-y-6 py-4 ">
@@ -284,37 +294,48 @@ function CourseDetails() {
 					<h1 className="text-4xl text-center font-semibold">Reviews</h1>
 					<span className="w-[50px] h-[2px] bg-black absolute start-[50%] translate-x-[-50%]"></span>
 				</div>
+				{localStorage.getItem('role') === 'student' && (
+					<form
+						onSubmit={(e) => {
+							e.preventDefault();
+							handleAddReview();
+						}}
+						className="addReview px-6 w-full md:w-[70%] self-center "
+					>
+						<label htmlFor="feedback" className="mb-2  text-xl">
+							Add Review
+						</label>
+						<textarea
+							className="w-full border-[1px] focus:outline-none p-2 rounded-lg border-[#E1E1E1]"
+							rows="6"
+							cols="60"
+							name="review"
+							id="review"
+							placeholder="type your review ..."
+							onChange={(e) => setText(e.target.value)}
+						></textarea>
 
-				<div className="addReview px-6 w-full md:w-[70%] self-center ">
-					<label htmlFor="feedback" className="mb-2  text-xl">
-						Add Review
-					</label>
-					<textarea
-						className="w-full border-[1px] focus:outline-none p-2 rounded-lg border-[#E1E1E1]"
-						rows="6"
-						cols="60"
-						name="feedback"
-						id="feedback"
-						placeholder="type your review ..."
-					></textarea>
+						<StyledRating
+							name="highlight-selected-only"
+							// defaultValue={Rate}
+							value={Rate}
+							IconContainerComponent={IconContainer}
+							getLabelText={(value) => customIcons[value].label}
+							highlightSelectedOnly
+							onChange={(e) => setRate(parseInt(e.target.value))}
+						/>
 
-					<StyledRating
-						name="highlight-selected-only"
-						// defaultValue={Rate}
-						value={Rate}
-						IconContainerComponent={IconContainer}
-						getLabelText={(value) => customIcons[value].label}
-						highlightSelectedOnly
-						onChange={(e) => setRate(parseInt(e.target.value))}
-					/>
-
-					<button className="rounded-xl p-2  w-full bg-secondMainColor text-white">
-						Submit
-					</button>
-				</div>
+						<button
+							type="submit"
+							className="rounded-xl p-2  w-full bg-secondMainColor text-white"
+						>
+							Submit
+						</button>
+					</form>
+				)}
 
 				<div className="content w-full  flex flex-col md:flex-row flex-wrap    px-6  items-center gap-8">
-					{visibleData2.map((item, i) => {
+					{reviews.map((review, i) => {
 						return (
 							<div
 								key={i}
@@ -323,23 +344,18 @@ function CourseDetails() {
 								<img src={smallAvatar} alt="smallAvatar" />
 								<div className="flex flex-col w-full gap-1 items-end ">
 									<h4 className=" font-semibold text-start self-start">
-										Student Name
+										Student {review.studentUUID}
 									</h4>
-									<p className="text-start self-start">
-										Lorem ipsum dolor sit amet consectetur adipisicing elit.
-										Aut, aliquid mollitia id commodi sed quibusdam
-										necessitatibus.
-									</p>
+									<p className="text-start self-start">{review.review}</p>
 
 									<div>
 										<StyledRating
 											name="highlight-selected-only"
 											// defaultValue={Rate}
-											value={Rate}
+											value={Math.round(review.rating)}
 											IconContainerComponent={IconContainer}
 											getLabelText={(value) => customIcons[value].label}
 											highlightSelectedOnly
-											onChange={(e) => setRate(parseInt(e.target.value))}
 										/>
 									</div>
 								</div>
@@ -347,12 +363,6 @@ function CourseDetails() {
 						);
 					})}
 				</div>
-				<Pagination
-					totalItems={x?.length}
-					itemsPerPage={itemsPerPage}
-					currentPage={currentPage}
-					onPageChange={handlePageChange}
-				/>
 			</div>
 		</div>
 	);

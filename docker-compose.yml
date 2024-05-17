@@ -37,6 +37,7 @@ services:
       - course-network
       - course-review-network
       - course-enrollment-course-network
+      - user-course-network
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://course-service-db:5432/postgres
       REVIEW_SERVICE_URL:  http://review-service:8080/review_service_war_exploded/api/v1/reviews
@@ -64,6 +65,7 @@ services:
     networks:
       - course-enrollment-network
       - course-enrollment-course-network
+      - user-enrollment-network
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://course-enrollment-db:5432/postgres
       COURSE_SERVICE_URL: http://course-service:8080/api/v1/courses
@@ -78,7 +80,45 @@ services:
     networks:
       - course-enrollment-network
 
+  # User Service
+  user-service:
+    build: ./user-service
+    restart: unless-stopped
+    ports:
+      - '8383:8383'
+    depends_on:
+      - user-service-mongo
+    environment:
+      PORT: 8383
+      NODE_ENV: development
+      MONGO_USER: root
+      MONGO_PASS: example
+      MONGO_PORT: 27018
+      DB_NAME: sanadlite
+      JWT_SECRET_KEY: sanadlite
+      JWT_EXPIRES_IN: 90d
+      BCRYPT_SALT: 8
+      COURSE_SERVICE_URL: http://course-service:8080
+      ENROLLMENT_SERVICE_URL: http://course-enrollment-service:8282
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - user-network
+      - user-course-network
+      - user-enrollment-network
 
+  user-service-mongo:
+    image: mongo
+    restart: always
+    ports:
+      - 27018:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    networks:
+      - user-network
+      
 
 networks:
   review-network:
@@ -87,11 +127,16 @@ networks:
     driver: bridge
   course-enrollment-network:
     driver: bridge
+  user-network:
+    driver: bridge
 
   course-review-network:
     driver: bridge
   course-enrollment-course-network:
     driver: bridge
-
+  user-course-network:
+    driver: bridge
+  user-enrollment-network:
+    driver: bridge
 
 

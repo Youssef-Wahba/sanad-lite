@@ -3,21 +3,23 @@ import axios from 'axios';
 import { useFormik } from 'formik';
 import React, { useState } from 'react';
 import { redirect, useNavigate } from 'react-router-dom';
+import { register } from '../utils/apis';
 
 export default function Register() {
 	const types = ['student', 'instructor'];
 	const [selectedType, setselectedType] = useState(types[0]);
+	const [errorFlag, setErrorFlag] = useState(false);
 	const redirectTo = useNavigate();
 	const formik = useFormik({
 		initialValues: {},
 		onSubmit: async (values) => {
 			values['role'] = selectedType;
-			const response = await axios.post(
-				'http://localhost:8383/api/v1/auth/register',
-				values
-			);
-			console.log(response.data);
-			redirectTo('/login');
+			const response = await register(values);
+			if (response['err']) {
+				setErrorFlag(true);
+			} else {
+				redirectTo('/login');
+			}
 		},
 	});
 
@@ -199,7 +201,6 @@ export default function Register() {
 						</div>
 					</div>
 				</div>
-
 				<div className="buttons w-full">
 					<button
 						type="submit"
@@ -208,6 +209,11 @@ export default function Register() {
 						Submit
 					</button>
 				</div>
+				{errorFlag && (
+					<p className="text-red-400">
+						Already registered or not completed data
+					</p>
+				)}
 			</form>
 		</div>
 	);

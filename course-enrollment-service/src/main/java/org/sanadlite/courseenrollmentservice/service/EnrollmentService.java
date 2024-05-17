@@ -79,7 +79,7 @@ public class EnrollmentService {
                 Enrollment enrollment1 = enrollment.get();
                 enrollment1.setStatus(0);
                 enrollmentRepository.save(enrollment1);
-                kafkaTemplate.send("notifications","Accepted enrollment of course "+enrollment1.getCourseId() + " for student " + enrollment1.getStudentUUID());
+                kafkaTemplate.send("notifications","Rejected enrollment of course "+enrollment1.getCourseId() + " for student " + enrollment1.getStudentUUID());
                 return true;
             }
         } else return false;

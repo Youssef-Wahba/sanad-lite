@@ -7,7 +7,7 @@ config();
 
 const router = Router();
 const version = 'api/v1';
-const courseServiceBaseUrl = `http://localhost:${process.env.COURSE_SERVICE_PORT}`;
+const courseServiceBaseUrl = process.env.COURSE_SERVICE_URL;
 
 export const getAllCourses = catchAsyncError(async (req, res) => {
 	const queryParams = stringifyQueryParams(req.query);

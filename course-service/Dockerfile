@@ -11,12 +11,12 @@ RUN mvn clean package -DskipTests
 RUN mv target/course-service-0.0.1-SNAPSHOT.jar target/course_service.jar
 
 
-FROM openjdk:17-jdk-alpine
+FROM openjdk:17-jdk
 
 COPY --from=maven_builder /app/target/course_service.jar /target/
 
-RUN addgroup -S spring && adduser -S spring -G spring
+# RUN addgroup -S spring && adduser -S spring -G spring
 
-USER spring:spring
+# USER spring:spring
 
 ENTRYPOINT ["java","-jar","/target/course_service.jar"]

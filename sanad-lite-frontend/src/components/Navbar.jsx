@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { isLoggedIn } from '../utils/auth';
+import { isLoggedIn } from '../utils/apis';
 
 const Navbar = () => {
 	const [toggleMenu, settoggleMenu] = useState(false);

@@ -1,84 +1,169 @@
 import { Disclosure } from '@headlessui/react';
 import axios from 'axios';
-import { useContext, useState, useEffect, useMemo } from 'react';
+import { useFormik } from 'formik';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-
+import { addCourse, deleteCourseById, getAllCourses } from '../utils/apis';
+import { stringifyQueryParams } from '../utils/helpers';
+// import { decode } from 'jwt-decode';
 const Courses = () => {
 	const [searchQuery, setSearchQuery] = useState('');
-	const [touched, setTouched] = useState(false);
 	const [courses, setCourses] = useState([]);
-	const [currentPage, setCurrentPage] = useState(1);
-	const [totalItems, settotalItems] = useState(0);
 	const [loading, setloading] = useState(false);
 
-	const x = [3, 3, 3, 3, 3, 3, 3, 3];
-	const itemsPerPage = 1000;
-	const displayRange = 1;
-	const pagesToShow = [];
-	const totalPages = Math.ceil(totalItems / itemsPerPage);
-	const startPage = Math.max(currentPage - displayRange, 1);
-	const endPage = Math.min(currentPage + displayRange, totalPages);
-	// Calculate the start and end indexes for the current page
-	const startIndex = (currentPage - 1) * itemsPerPage;
-	const endIndex = Math.min(startIndex + itemsPerPage, x?.length);
-	const visibleData2 = x.slice(startIndex, endIndex);
+	const role = localStorage.getItem('role');
 	const arr = [112, 22, 2, 2, 2];
+	const token = localStorage.getItem('token');
+
+	const handleDeleteCourse = async (e, courseId) => {
+		e.preventDefault();
+		await deleteCourseById(courseId, token);
+	};
+	const formik = useFormik({
+		initialValues: {},
+		onSubmit: async (values) => {
+			values['endDate'] = new Date(values['endDate']).toISOString();
+			if (values['maxCapacity'] === '') values['maxCapacity'] = -1;
+			values['instructorId'] = JSON.parse(localStorage.getItem('user'))['_id'];
+			await addCourse(values, token);
+		},
+	});
 
 	const handleSearchChange = (event) => {
 		setSearchQuery(event.target.value);
-		setTouched(true);
 	};
 
-	const fetchAllCourses = async (searchQuery) => {
-		const response = await axios.get(
-			`http://localhost:8383/api/v1/courses?size=${itemsPerPage}`,
-			{
-				headers: {
-					authorization: 'Bearer ' + localStorage.getItem('token'),
-				},
-			}
-		);
-		console.log(response.data);
-		settotalItems(response.data.numberOfElements);
+	const fetchCourses = async (search) => {
+		const q = stringifyQueryParams(search);
+		const response = await getAllCourses(token, q);
 		setCourses(response.data.content);
 	};
 
-	// pagination
-	const handlePageChange = (newPage) => {
-		setCurrentPage(newPage);
-		// getPayments(newPage)
-	};
-
-	const handleClick = (newPage) => {
-		if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {
-			handlePageChange(newPage);
-		}
-	};
-
-	if (startPage > 2) {
-		pagesToShow.push(1);
-		if (startPage > 3) {
-			pagesToShow.push('...');
-		}
-	}
-
-	for (let i = startPage; i <= endPage; i++) {
-		pagesToShow.push(i);
-	}
-
-	if (endPage < totalPages - 1) {
-		if (endPage < totalPages - 2) {
-			pagesToShow.push('...');
-		}
-		pagesToShow.push(totalPages);
-	}
-
 	useEffect(() => {
-		fetchAllCourses();
-	}, [totalItems]);
+		const query = { search: searchQuery, size: 1000 };
+		if (localStorage.getItem('role') === 'instructor')
+			query['instructorId'] = JSON.parse(localStorage.getItem('user'))['_id'];
+		console.log(query);
+		fetchCourses(query);
+		console.log(courses);
+	}, [searchQuery]);
 
 	return (
 		<div className="flex flex-col xl:flex-row w-full px-8 ">
+			{role === 'instructor' && (
+				<>
+					<h2 className="mx-auto my-3 font-bold text-mainColor text-center text-3xl">
+						Add course:
+					</h2>
+					<form
+						onSubmit={formik.handleSubmit}
+						className="flex items-center flex-col  gap-y-5 sm:w-[60%] mx-auto py-2"
+					>
+						<div className="flex flex-col sm:flex-row items-center sm:gap-x-6  w-full h-auto sm:h-[350px]">
+							<div className=" h-full flex flex-col w-full  sm:w-1/2 justify-start  gap-y-3  ">
+								<div className="name flex flex-col w-full">
+									<label
+										className="text-base text-secondMainColor font-semibold"
+										htmlFor="name"
+									>
+										Course name
+									</label>
+									<input
+										id="name"
+										name="name"
+										onBlur={formik.handleBlur}
+										onChange={formik.handleChange}
+										className={` w-full px-2 placeholder:text-size_12 text-size_12 outline-none  focus:outline-none text-start border-[1px] text-sm text-secondMainColor font-semibold   rounded-xl py-2   px 6 placeholder:text-start`}
+										type="text"
+										placeholder="name"
+									/>
+								</div>
+								<div className="name flex flex-col w-full">
+									<label
+										className="text-base text-secondMainColor font-semibold"
+										htmlFor="category"
+									>
+										Category
+									</label>
+									<select
+										onChange={formik.handleChange}
+										className="w-full px-2 placeholder:text-size_12 text-size_12 outline-none  focus:outline-none text-start border-[1px] text-sm text-secondMainColor font-semibold   rounded-xl py-2   px 6 placeholder:text-start"
+										name="category"
+										id="category"
+									>
+										<option value="BUSINESS">BUSINESS</option>
+										<option value="DEVELOPMENT">DEVELOPMENT</option>
+										<option value="OTHER">OTHER</option>
+									</select>
+								</div>
+								<div className="name flex flex-col w-full">
+									<label
+										className="text-base text-secondMainColor font-semibold"
+										htmlFor="endDate"
+									>
+										End date
+									</label>
+									<input
+										id="endDate"
+										name="endDate"
+										onBlur={formik.handleBlur}
+										onChange={formik.handleChange}
+										className={` w-full px-2 placeholder:text-size_12 text-size_12 outline-none  focus:outline-none text-start border-[1px] text-sm text-secondMainColor font-semibold   rounded-xl py-2   px 6 placeholder:text-start`}
+										type="date"
+										placeholder="dd/mm/yyyy"
+									/>
+								</div>
+							</div>
+
+							<div className=" h-full flex flex-col gap-y-3 w-full sm:w-1/2    ">
+								<div className="name flex flex-col w-full">
+									<label
+										className="text-base text-secondMainColor font-semibold"
+										htmlFor="name"
+									>
+										Max capacity
+									</label>
+									<input
+										id="maxCapacity"
+										name="maxCapacity"
+										onBlur={formik.handleBlur}
+										onChange={formik.handleChange}
+										className={` w-full px-2 placeholder:text-size_12 text-size_12 outline-none  focus:outline-none text-start border-[1px] text-sm text-secondMainColor font-semibold   rounded-xl py-2   px 6 placeholder:text-start`}
+										type="number"
+										placeholder="e.g 100"
+									/>
+								</div>
+								<div className="name flex flex-col w-full">
+									<label
+										className="text-base text-secondMainColor font-semibold"
+										htmlFor="description"
+									>
+										Description
+									</label>
+									<textarea
+										onBlur={formik.handleBlur}
+										onChange={formik.handleChange}
+										name="description"
+										className={` w-full px-2 placeholder:text-size_12 text-size_12 outline-none  focus:outline-none text-start border-[1px] text-sm text-secondMainColor font-semibold   rounded-xl py-2   px 6 placeholder:text-start`}
+										id="description"
+										rows="6"
+										cols="60"
+										placeholder="example description"
+									></textarea>
+								</div>
+							</div>
+						</div>
+						<div className="w-full">
+							<button
+								type="submit"
+								className="font-bold bg-mainColor rounded-xl text-white py-2 px-3 w-full"
+							>
+								Add course
+							</button>
+						</div>
+					</form>
+				</>
+			)}
 			<div
 				className={`w-full   rounded-lg flex flex-col lg:px-6 py-4 gap-6  ${
 					!loading ? 'lg:h-[430px]' : 'lg:h-auto'
@@ -142,17 +227,10 @@ const Courses = () => {
 								</div>
 							</div>
 							{courses?.map((course, i) => {
-								console.log(course);
 								return (
-									<Link
-										to={`/course/${course.id}`}
-										key={i}
-										className="content bg-white relative"
-									>
-										<div
-											onClick={(e) => {
-												e.stopPropagation();
-											}}
+									<div className="flex" key={i}>
+										<Link
+											to={`/course/${course.id}`}
 											className="py-[10px] px-6 w-full bg-white border-[#E1E1E1] border  flex items-center justify-between relative"
 										>
 											{/* <div className="flex text-start gap-2 w-1/5"> */}
@@ -166,7 +244,7 @@ const Courses = () => {
 											</div>
 
 											<p className="font-bold text-mainColor text-start  text-sm 2xl:text-base w-1/6">
-												{course.rating}
+												{course.rating.toFixed(1)}
 											</p>
 											<p className="font-bold text-mainColor text-start  text-sm 2xl:text-base w-1/6">
 												{course.ratingsCount}
@@ -180,13 +258,25 @@ const Courses = () => {
 												{course.endDate != null &&
 												new Date(course.endDate).getTime() >
 													new Date().getTime() ? (
-													<span className="text-green-300">Active</span>
+													<span className="text-green">Active</span>
 												) : (
-													<span className="text-red-300">Closed</span>
+													<span className="text-red-500">Closed</span>
 												)}
 											</p>
-										</div>
-									</Link>
+										</Link>
+										{role === 'admin' && (
+											<div
+												className="mt-2 ml-2 cursor-pointer"
+												onClick={(e) => {
+													handleDeleteCourse(e, course.id);
+												}}
+											>
+												<span className="bg-red-500 px-3 py-2 rounded-md text-stone-100 font-semibold">
+													Delete
+												</span>
+											</div>
+										)}
+									</div>
 								);
 							})}
 						</>
@@ -209,60 +299,9 @@ const Courses = () => {
 						})
 					)}
 				</div>
-
-				{!loading && (
-					<div className=" hidden lg:block">
-						<div className="flex justify-center items-center text-size_10 sm:text-size_12 md:text-size__14 max-w-full">
-							<button
-								onClick={() => handleClick(currentPage - 1)}
-								className={`${
-									currentPage === 1
-										? 'opacity-50 cursor-not-allowed'
-										: 'cursor-pointer'
-								} text-[#293241] px-3 py-1 rounded-lg mr-2 font-bold`}
-								disabled={currentPage === 1}
-							>
-								&lt;
-							</button>
-
-							{pagesToShow.map((page, index) => (
-								<button
-									key={index}
-									onClick={() => {
-										if (typeof page === 'number') {
-											handleClick(page);
-										}
-									}}
-									className={`${
-										typeof page === 'number'
-											? currentPage === page
-												? 'bg-gradient-to-r from-[#023E8AB2] to-[#2684FFCC] text-white'
-												: 'bg-transparent text-[#293241] hover:bg-slate-100'
-											: 'text-[#293241]'
-									} px-3 py-1 rounded-lg mx-1 cursor-pointer font-bold`}
-								>
-									{page}
-								</button>
-							))}
-							<button
-								onClick={() => handleClick(currentPage + 1)}
-								className={`${
-									currentPage === totalPages
-										? 'opacity-50 cursor-not-allowed'
-										: 'cursor-pointer'
-								}  text-[#293241] px-3 py-1 rounded-lg ml-2 font-bold`}
-								disabled={currentPage === totalPages}
-							>
-								&gt;
-							</button>
-						</div>
-					</div>
-				)}
-
-				{/* uncomment this part if you have the data then loop in it to display the data*/}
 				<div className="flex flex-col rounded-2xl gap-y-3 lg:hidden">
 					{!loading
-						? visibleData2?.map((item, i) => {
+						? courses.map((course, i) => {
 								return (
 									<Disclosure key={i}>
 										{({ open }) => (
@@ -273,13 +312,12 @@ const Courses = () => {
 													}`}
 												>
 													<div className="flex items-center  gap-x-2">
-														icon
 														<div className="flex flex-col items-start">
 															<p className="font-bold text-mainColor text-size__14 sm:text-base md:text-size_18">
-																coursename
+																{course.name}
 															</p>
 															<p className="font-bold text-textGray text-size_12 sm:text-sm md:text-base">
-																Rate
+																rating: {course.rating.toFixed(1)}
 															</p>
 														</div>
 													</div>
@@ -298,16 +336,16 @@ const Courses = () => {
 															Category
 														</p>
 														<div className="font-semibold text-size_12 sm:text-size__14 text-textGray text-center">
-															data
+															{course.category}
 														</div>
 													</div>
 
 													<div className="flex justify-between items-center w-full">
 														<p className="font-semibold text-size_12 sm:text-size__14 text-textGray text-center ">
-															Rateing Count
+															Rating Count
 														</p>
 														<p className="flex  gap-2 font-semibold text-textGray text-size_12 sm:text-size__14 flex-wrap justify-end w-3/4">
-															time
+															{course.ratingsCount}
 														</p>
 													</div>
 
@@ -316,7 +354,7 @@ const Courses = () => {
 															Enrollments
 														</p>
 														<div className="flex  gap-2 font-semibold text-size_12 sm:text-size__14 text-textGray flex-wrap justify-end w-3/4">
-															afs
+															{course.enrollmentsNumber}
 														</div>
 													</div>
 
@@ -325,15 +363,18 @@ const Courses = () => {
 															Status
 														</p>
 														<div className="flex  gap-2 font-semibold text-size_12 sm:text-size__14 text-textGray flex-wrap justify-end w-3/4">
-															afs
+															{course.endDate != null &&
+															new Date(course.endDate).getTime() >
+																new Date().getTime() ? (
+																<span className="text-green">Active</span>
+															) : (
+																<span className="text-red-500">Closed</span>
+															)}
 														</div>
 													</div>
 
 													<div className="flex justify-between items-center w-full relative">
 														<p className="font-semibold text-size_12 sm:text-size__14 text-textGray text-center "></p>
-														<div className=" w-6 h-6  cursor-pointer bg-secondMainColor flex items-center justify-center rounded-md">
-															<i className="fa-solid fa-plus text-white"></i>
-														</div>
 													</div>
 												</Disclosure.Panel>
 											</div>
@@ -357,53 +398,6 @@ const Courses = () => {
 									</div>
 								);
 						  })}
-
-					{!loading ? (
-						<div className="flex justify-center items-center text-size_10 sm:text-size_12 md:text-size__14 max-w-full">
-							<button
-								onClick={() => handleClick(currentPage - 1)}
-								className={`${
-									currentPage === 1
-										? 'opacity-50 cursor-not-allowed'
-										: 'cursor-pointer'
-								} text-[#293241] px-3 py-1 rounded-lg mr-2 font-bold`}
-								disabled={currentPage === 1}
-							>
-								&lt;
-							</button>
-
-							{pagesToShow.map((page, index) => (
-								<button
-									key={index}
-									onClick={() => {
-										if (typeof page === 'number') {
-											handleClick(page);
-										}
-									}}
-									className={`${
-										typeof page === 'number'
-											? currentPage === page
-												? 'bg-gradient-to-r from-[#023E8AB2] to-[#2684FFCC] text-white'
-												: 'bg-transparent text-[#293241] hover:bg-slate-100'
-											: 'text-[#293241]'
-									} px-3 py-1 rounded-lg mx-1 cursor-pointer font-bold`}
-								>
-									{page}
-								</button>
-							))}
-							<button
-								onClick={() => handleClick(currentPage + 1)}
-								className={`${
-									currentPage === totalPages
-										? 'opacity-50 cursor-not-allowed'
-										: 'cursor-pointer'
-								}  text-[#293241] px-3 py-1 rounded-lg ml-2 font-bold`}
-								disabled={currentPage === totalPages}
-							>
-								&gt;
-							</button>
-						</div>
-					) : null}
 				</div>
 			</div>
 		</div>
