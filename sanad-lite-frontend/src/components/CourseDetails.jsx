@@ -69,7 +69,7 @@ function CourseDetails() {
 
 	const fetchCurrentCourse = async () => {
 		const response = await axios.get(
-			`http://localhost:8383/api/v1/courses/${courseId}`,
+			`${process.env.REACT_APP_API_URL}/api/v1/courses/${courseId}`,
 			{
 				headers: {
 					authorization: 'Bearer ' + localStorage.getItem('token'),
@@ -81,7 +81,7 @@ function CourseDetails() {
 		setCourse(getCourse);
 		setContent(getContent);
 		const response2 = await axios.get(
-			`http://localhost:8383/api/v1/users/${getCourse.instructorId}`,
+			`${process.env.REACT_APP_API_URL}/api/v1/users/${getCourse.instructorId}`,
 			{
 				headers: {
 					authorization: 'Bearer ' + localStorage.getItem('token'),

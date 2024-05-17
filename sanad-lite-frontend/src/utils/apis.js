@@ -10,7 +10,7 @@ export const isLoggedIn = () => {
 export const login = async (payload) => {
 	try {
 		const response = await axios.post(
-			'http://localhost:8383/api/v1/auth/login',
+			`${process.env.REACT_APP_API_URL}/api/v1/auth/login`,
 			payload
 		);
 		return { status: response.status, data: response.data };
@@ -25,7 +25,7 @@ export const login = async (payload) => {
 export const register = async (payload) => {
 	try {
 		const response = await axios.post(
-			'http://localhost:8383/api/v1/auth/register',
+			`${process.env.REACT_APP_API_URL}/api/v1/auth/register`,
 			payload
 		);
 		return { status: response.status, data: response.data };
@@ -41,10 +41,10 @@ export const register = async (payload) => {
 export const getAllCourses = async (token, query) => {
 	try {
 		const response = await axios.get(
-			`http://localhost:8383/api/v1/courses?${query}`,
+			`${process.env.REACT_APP_API_URL}/api/v1/courses?${query}`,
 			{
 				headers: {
-					authorization: 'Bearer ' + token,
+					authorization: `Bearer ` + token,
 				},
 			}
 		);
@@ -61,11 +61,11 @@ export const getAllCourses = async (token, query) => {
 export const addCourse = async (payload, token) => {
 	try {
 		const response = await axios.post(
-			`http://localhost:8383/api/v1/courses`,
+			`${process.env.REACT_APP_API_URL}/api/v1/courses`,
 			payload,
 			{
 				headers: {
-					authorization: 'Bearer ' + token,
+					authorization: `Bearer ` + token,
 				},
 			}
 		);
@@ -82,10 +82,10 @@ export const addCourse = async (payload, token) => {
 export const getCourseById = async (courseId, token) => {
 	try {
 		const response = await axios.get(
-			`http://localhost:8383/api/v1/courses/${courseId}`,
+			`${process.env.REACT_APP_API_URL}/api/v1/courses/${courseId}`,
 			{
 				headers: {
-					authorization: 'Bearer ' + token,
+					authorization: `Bearer ` + token,
 				},
 			}
 		);
@@ -102,10 +102,10 @@ export const getCourseById = async (courseId, token) => {
 export const deleteCourseById = async (courseId, token) => {
 	try {
 		const response = await axios.delete(
-			`http://localhost:8383/api/v1/courses/${courseId}`,
+			`${process.env.REACT_APP_API_URL}/api/v1/courses/${courseId}`,
 			{
 				headers: {
-					authorization: 'Bearer ' + token,
+					authorization: `Bearer ` + token,
 				},
 			}
 		);
@@ -123,11 +123,11 @@ export const deleteCourseById = async (courseId, token) => {
 export const updateCourseById = async (courseId, payload, token) => {
 	try {
 		const response = await axios.patch(
-			`http://localhost:8383/api/v1/courses/${courseId}`,
+			`${process.env.REACT_APP_API_URL}/api/v1/courses/${courseId}`,
 			payload,
 			{
 				headers: {
-					authorization: 'Bearer ' + token,
+					authorization: `Bearer ` + token,
 				},
 			}
 		);
@@ -144,7 +144,7 @@ export const updateCourseById = async (courseId, payload, token) => {
 export const addCourseReview = async (payload, token) => {
 	try {
 		const response = await axios.post(
-			'http://localhost:8383/api/v1/courses/reviews',
+			`${process.env.REACT_APP_API_URL}/api/v1/courses/reviews`,
 			payload,
 			{
 				headers: {
@@ -161,7 +161,7 @@ export const addCourseReview = async (payload, token) => {
 export const getCourseReviews = async (courseId, token) => {
 	try {
 		const response = await axios.get(
-			`http://localhost:8383/api/v1/courses/${courseId}/reviews`,
+			`${process.env.REACT_APP_API_URL}/api/v1/courses/${courseId}/reviews`,
 			{
 				headers: {
 					authorization: 'Bearer ' + token,
@@ -177,7 +177,7 @@ export const getCourseReviews = async (courseId, token) => {
 export const addCourseContent = async (courseId, payload, token) => {
 	try {
 		const response = await axios.post(
-			`http://localhost:8383/api/v1/courses/${courseId}/content`,
+			`${process.env.REACT_APP_API_URL}/api/v1/courses/${courseId}/content`,
 			payload,
 			{
 				headers: {
