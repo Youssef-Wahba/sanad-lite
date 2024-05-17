@@ -1,5 +1,5 @@
 # Use a Node.js image to build and serve the React application
-FROM node:16-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 

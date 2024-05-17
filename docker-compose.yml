@@ -65,10 +65,12 @@ services:
     networks:
       - course-enrollment-network
       - course-enrollment-course-network
+      - course-enrollment-kafka-network
       - user-course-enrollment-network
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://course-enrollment-db:5432/postgres
       COURSE_SERVICE_URL: http://course-service:8080/api/v1/courses
+      SPRING_KAFKA_PRODUCER_BOOTSTRAP_SERVERS: kafka:9092
 
   course-enrollment-db:
     image: postgres
@@ -100,10 +102,13 @@ services:
       ENROLLMENT_SERVICE_PORT: 8282
       COURSE_SERVICE_URL: http://course-service:8080
       ENROLLMENT_SERVICE_URL: http://course-enrollment-service:8282
+      KAFKA_BROKER: kafka:9092
     networks:
       - user-network
       - user-course-network
       - user-course-enrollment-network
+      - user-kafka-network
+      - user-frontend-network
 
   user-service-db:
     image: mongo
@@ -115,6 +120,30 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: example
     networks:
       - user-network
+
+
+  # Frontend
+  frontend-service:
+    build: ./sanad-lite-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://user-service:8383
+    networks:
+      - user-frontend-network
+
+
+
+  # Kafka Message Broker
+  kafka:
+    image: apache/kafka:3.7.0
+    ports:
+      - "9092:9092"
+    networks:
+      - user-kafka-network
+      - course-enrollment-kafka-network
+#    environment:
+#      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
 
 networks:
   review-network:
@@ -135,5 +164,9 @@ networks:
     driver: bridge
   user-course-enrollment-network:
     driver: bridge
-
-
+  user-frontend-network:
+    driver: bridge
+  user-kafka-network:
+    driver: bridge
+  course-enrollment-kafka-network:
+    driver: bridge
